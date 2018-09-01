@@ -9,7 +9,7 @@ import random
 
 #-----------------------------------------------------------------------------------------------------------------
 
-TOKEN = "NDYxNjU2Nzk0NTYxNzczNTg4.DhWe_Q.ngqoRy0rniOJr79BNXfdAVdTC5c" # add your bot TOKEN
+TOKEN = "TOKEN" # add your bot TOKEN
 
 client = commands.Bot(command_prefix="$") #choose the prefix you want yo use
 status = ["status1", "status2", "status3"] # more status can be added
