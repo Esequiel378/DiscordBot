@@ -12,7 +12,7 @@ def getSearch(search):
 	url_check = ["https://","www.",".com"]
 	bTitle = ["(", ")", "[", "]"] #Characters to delete
 
-	API_KEY = "AIzaSyAp6LDki7q5NePgwJniTFdxtnKFc1tOazU" #add your API KEY
+	API_KEY = "APIKEY" #add your API KEY
 
 	for i in range(len(url_check)):
 
