@@ -10,13 +10,13 @@ def getSearch(search):
 	cout = False
 
 	url_check = ["https://","www.",".com"]
-	bTitle = ["(", ")", "[", "]"] #Characters to delete
+	#bTitle = ["(", ")", "[", "]"] #Characters to delete
 
 	API_KEY = "APIKEY" #add your API KEY
 
 	for i in range(len(url_check)):
 
-		'''sistem to detect if its a link or search'''
+		'''system to detect if its a link or search'''
           
 		if url_check[i] in search:
 
