@@ -3,26 +3,30 @@ from features.music import create_media
 from discord.ext import commands
 from itertools import cycle
 import youtube_dl
+import datetime
 import discord
 import asyncio
 import random
+import time
 
 #-----------------------------------------------------------------------------------------------------------------
 
 TOKEN = "NDYxNjU2Nzk0NTYxNzczNTg4.DhWe_Q.ngqoRy0rniOJr79BNXfdAVdTC5c" # add your bot TOKEN
 
 client = commands.Bot(command_prefix="$") #choose the prefix you want yo use
-status = ["status1", "status2", "status3"] # more status can be added
 servers_list = {}
+searches = {}
 
 HEADS = "**Heads**"
 TAILS = "**Tails**"
 
 RESUME = ":play_pause: **RESUMING**"
-REMOVE = "**REMOVED**"
+REMOVE = "**SONGS REMOVED**"
 PAUSE = " :pause_button: **PAUSED**"
 STOP = ":stop_button: **STOPING MUSIC**"
 SKIP = ":track_next: **SONG SKIPED**"
+NO_PLAYING = "**NO SONGS PLAYING** :x:"
+LS_SKIPED = ":track_next: **LAST SONG SKIPED**"
 RANDOM = ":twisted_rightwards_arrows: **STIR QUEUE**"
 
 NOT_ALLOWED = "**You are not allowed to use that command** :exclamation:"
@@ -30,7 +34,7 @@ BOT_NOT_IN_VOICE_CHANNEL = "**Im not in voice channel** :exclamation:"
 BOT_IN_VOICE_CHANNEL = "**Im allready in a voice channel** :exclamation:"
 USER_NOT_IN_VOICE_CHANNEL = "**You are not in a voice channel** :exclamation:"
 MSG_ALERT = "__You can olny delete up to 14 days old messages__"
-FAILED_SEARCH = "**Could not find the song** :x:"
+FAILED_SEARCH = "**Could not find the song. Try with Search command**"
 
 '''client.remove_command('help')''' 
 
@@ -49,28 +53,22 @@ def in_channel(server, channel):
 
 #-----------------------------------------------------------------------------------------------------------------
 
-async def change_status():
+async def search_time_out():
 
     '''Change bot status in a loop'''
 
     global urlTitle
 
     await client.wait_until_ready()
-    msgs = cycle(status)
 
     while not client.is_closed:
 
-        current_status = next(msgs)
+        unix = time.time()
+        DATE = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
 
-        try:
+        #obtener solo la hora
 
-            await client.change_presence(game=discord.Game(name=auxTitles))
-
-        except:
-            
-            await client.change_presence(game=discord.Game(name=current_status))
-        
-        await asyncio.sleep(2)
+        await asyncio.sleep(5)
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -181,7 +179,7 @@ async def leave(ctx):
         voice_client = client.voice_client_in(server)
 
         servers_list[server][1].stop()
-        servers_list.pop(server, None)
+        servers_list.pop(server) #, None
 
         await voice_client.disconnect()
 
@@ -202,7 +200,7 @@ async def play(ctx, *args):
     error = False
 
     urls = []
-    url = " ".join(args)        
+    url = " ".join(args)
 
     if server not in servers_list:
 
@@ -211,6 +209,7 @@ async def play(ctx, *args):
         
         except:
             await client.send_message(text_channel, USER_NOT_IN_VOICE_CHANNEL)
+            error = True
 
     elif not in_channel(server, channel):
 
@@ -264,9 +263,120 @@ async def play(ctx, *args):
 #-----------------------------------------------------------------------------------------------------------------
 
 @client.command(pass_context=True)
+async def search(ctx, *args):
+
+    '''Search a song options to choose'''
+
+    server = ctx.message.server
+    channel = ctx.message.author.voice.voice_channel
+    author = ctx.message.author
+    text_channel = ctx.message.channel
+
+    search = []
+    search = " ".join(args)
+
+    if in_channel(server, channel):
+
+        embed_search = getSearch(search, embed_search=True)
+
+        embed = discord.Embed(
+
+        title = "Search list",
+        #description = "Search list",
+        color = discord.Color.red()
+
+        )
+
+        for i in range(len(embed_search)):
+
+            embed.add_field(name=str(i + 1) + ": ", value= embed_search[i][1], inline=False)
+
+        await client.send_message(text_channel, embed = embed)
+
+        unix = time.time()
+        DATE = str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))
+        
+        searches[server] = [channel, author, text_channel, embed_search, DATE]
+     
+    else:
+
+        await client.send_message(text_channel, NOT_ALLOWED)
+
+#-----------------------------------------------------------------------------------------------------------------
+
+@client.command(pass_context=True)
+async def choose(ctx, *args):
+
+    '''Let user choose a song from Search commad'''
+
+    global servers_list
+
+    server = ctx.message.server
+    channel = ctx.message.author.voice.voice_channel
+    author = ctx.message.author
+    text_channel = ctx.message.channel
+    voice_client = client.voice_client_in(server)
+
+    songs = []
+    print(args)
+    songs = " ".join(args)
+
+    if server in searches:
+
+        if channel in searches[server]:
+
+            if author in searches[server]:
+
+                if text_channel in searches[server]:
+
+                    for i in songs:
+
+                        try:
+                            
+                            i = int(i)
+                            i -= 1
+
+                        except:
+                            continue
+
+                        url = searches[server][3][i][0]
+                        title = searches[server][3][i][1]
+
+                        if server not in servers_list:
+
+                            aux_sv = create_media(server, channel) 
+                            servers_list [server] = [channel, aux_sv]
+
+                            player = await voice_client.create_ytdl_player(url, after=lambda: servers_list[server][1].playlist_queue())
+
+                            servers_list[server][1].play(player, title)
+
+                        else:
+
+                            player = await voice_client.create_ytdl_player(url, after=lambda: servers_list[server][1].playlist_queue())
+
+                            servers_list[server][1].play(player, title)
+
+                else:
+
+                    await client.send_message(text_channel, "You must be in the same channel that search request")
+
+        else:
+
+            await client.send_message(text_channel, "You must be in the same channel that Superbot")
+
+    else:
+
+        await client.send_message(text_channel, "Use $search to get a list of song to choose")
+
+
+#-----------------------------------------------------------------------------------------------------------------
+
+@client.command(pass_context=True)
 async def pause(ctx):
 
     '''Pause current song'''
+
     server = ctx.message.server
     channel = ctx.message.author.voice.voice_channel
     text_channel = ctx.message.channel
@@ -275,14 +385,19 @@ async def pause(ctx):
         
         if in_channel(server, channel):
 
-            if servers_list[server][1].isPlaying():
+            if not servers_list[server][1].isEmpty():
 
-                servers_list[server][1].pause()
+                if servers_list[server][1].isPlaying():
 
-                await client.send_message(text_channel, PAUSE)
+                    servers_list[server][1].pause()
+
+                    await client.send_message(text_channel, PAUSE)
+
+                else:
+                    await client.send_message(text_channel, "Music allready paused")
 
             else:
-                await client.send_message(text_channel, "Music allready paused")
+                await client.send_message(text_channel, NO_PLAYING)
 
         else:
 
@@ -307,15 +422,20 @@ async def resume(ctx):
 
         if in_channel(server, channel):
 
-            if servers_list[server][1].isPlaying():
+            if not servers_list[server][1].isEmpty:
 
-                await client.send_message(text_channel, "Music allready playing")
+                if servers_list[server][1].isPlaying():
+
+                    await client.send_message(text_channel, "Music allready playing")
+
+                else:
+
+                    servers_list[server][1].resume()
+
+                    await client.send_message(text_channel, RESUME)
 
             else:
-
-                servers_list[server][1].resume()
-
-                await client.send_message(text_channel, RESUME)
+                await client.send_message(text_channel, NO_PLAYING)
 
         else:
 
@@ -341,9 +461,13 @@ async def stop(ctx):
 
         if in_channel(server, channel):
 
-            servers_list[server][1].stop()
+            if not servers_list[server][1].isEmpty():
 
-            await client.send_message(text_channel, STOP)
+                servers_list[server][1].stop()
+                await client.send_message(text_channel, STOP)
+
+            else:
+                await client.send_message(text_channel, NO_PLAYING)
 
         else:
 
@@ -371,9 +495,13 @@ async def remove(ctx, *args):
 
         if in_channel(server, channel):
 
-            servers_list[server][1].remove(lista)
+            if not servers_list[server][1].isEmpty:
 
-            await client.send_message(text_channel, REMOVE)
+                servers_list[server][1].remove(lista)
+                await client.send_message(text_channel, REMOVE)
+
+            else:
+                await client.send_message(text_channel, NO_PLAYING)
 
         else:
 
@@ -395,13 +523,17 @@ async def skip(ctx):
     channel = ctx.message.author.voice.voice_channel
     text_channel = ctx.message.channel 
 
-    if server in servers_list:
+    if server in servers_list: # check if server has a bot playing
 
         if in_channel(server, channel):
 
-            servers_list[server][1].skip()
+            if not servers_list[server][1].isEmpty():
 
-            await client.send_message(text_channel, SKIP)
+                servers_list[server][1].skip()
+                await client.send_message(text_channel, SKIP)                
+
+            else:
+                await client.send_message(text_channel, NO_PLAYING)
 
         else:
 
@@ -421,19 +553,24 @@ async def sort(ctx):
     channel = ctx.message.author.voice.voice_channel
     text_channel = ctx.message.channel
 
-    if server in servers_list:
+    if server in servers_list: # check if server has a bot playing
 
-        if in_channel(server, channel):
+        if in_channel(server, channel): # check if user are in bot's channel 
 
-            servers_list[server][1].sort()
+            if not servers_list[server][1].isEmpty(): # check if the playlist is Empty
 
-            await client.send_message(text_channel, RANDOM)
+                servers_list[server][1].sort() # sort queue
+
+                await client.send_message(text_channel, RANDOM)
+
+            else:
+                await client.send_message(text_channel, NO_PLAYING) #if playlist is empty, dysplay alert message
 
         else:
-            await client.send_message(text_channel, NOT_ALLOWED)
+            await client.send_message(text_channel, NOT_ALLOWED) # if user are not in bot's channel, dysplay alert message
 
     else:
-        await client.send_message(text_channel, BOT_NOT_IN_VOICE_CHANNEL)
+        await client.send_message(text_channel, BOT_NOT_IN_VOICE_CHANNEL) # if bot is not in a voice channel, dysplay alert
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -441,6 +578,7 @@ async def sort(ctx):
 async def queue(ctx):
 
     '''Show queue'''
+
 
     server = ctx.message.server
     channel = ctx.message.author.voice.voice_channel
@@ -450,13 +588,36 @@ async def queue(ctx):
 
         if in_channel(server, channel):
 
-            data = servers_list[server][1].queue()
+            if not servers_list[server][1].isEmpty():
 
-            try:
-                await client.send_message(text_channel, embed = data)
+                playlist = servers_list[server][1].queue()
 
-            except:
-                await client.send_message(text_channel, data)
+                embed = discord.Embed(
+
+                    #title = "",
+                    description = "\n",
+                    color = discord.Color.red()
+
+                    )
+
+                #embed.set_author(name= "Queue List")
+                #embed.set_footer(text= "This is a fotter")
+
+                embed.add_field(name= "Current playing: ", value= playlist[0][1], inline=False)
+
+                if len(playlist) > 1:
+
+                    count = 1
+
+                    for i in range(len(playlist)):
+
+                        embed.add_field(name= str(count) + ": ", value= playlist[count][1], inline=False)
+                        count += 1
+
+                await client.send_message(text_channel, embed = embed)
+
+            else:
+                await client.send_message(text_channel, NO_PLAYING)
 
         else:
             await client.send_message(text_channel, NOT_ALLOWED)
@@ -467,5 +628,5 @@ async def queue(ctx):
 
 
 
-client.loop.create_task(change_status())
+client.loop.create_task(search_time_out())
 client.run(TOKEN)

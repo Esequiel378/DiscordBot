@@ -1,17 +1,18 @@
 import requests
 
-def getSearch(search):
+def getSearch(search, embed_search=False):
 
 	'''get url and title'''
 
 	NO_RESULT = False
 
-	maxResults = 20
+	maxResults = 10
 	cout = False
 
-	url_check = ["https://","www.",".com"]
-	bTitle = ["(", ")", "[", "]"] #Characters to delete
+	search_results = []
 
+	url_check = ["https://","www.",".com"]
+	
 	API_KEY = "AIzaSyAp6LDki7q5NePgwJniTFdxtnKFc1tOazU" #add your API KEY
 
 	for i in range(len(url_check)):
@@ -39,57 +40,104 @@ def getSearch(search):
 		'''get url and title'''
 
 		try:
+
 			urlId = r['items'][i]['id']['videoId']
 			url = "http://www.youtube.com/watch?v=" + urlId
 
 			urlTitle = r['items'][i]['snippet']['title']
 
-			break
-	
+			url_info = [url, urlTitle]
+
+			search_results.append(url_info)
+
 		except:
-			NO_RESULT = True
+			
+			pass
+			
+	if search_results != []:
 
-	if not NO_RESULT:
+		if not embed_search:
 
-		if "(" and ")" in urlTitle: #delete whatever is inside of brackets
+			return search_results[0][0], fancy_title(search_results[0][1])
 		
-			a = urlTitle.find("(")
-			b = urlTitle.find(")")
+		else:
 
-			urlTitle = list(urlTitle)
+			for i in range(len(search_results)):
 
-			for i in range(a,b+1):
-				urlTitle.pop(a)
+				search_results[i][1] = fancy_title(search_results[i][1])
 
-			urlTitle = "".join(urlTitle)
+			return search_results
 
-		if "[" and "]" in urlTitle: #delete whatever is inside of square brackets
-			
-			a = urlTitle.find("[")
-			b = urlTitle.find("]")
+	else:
+		return "ERROR", "ERROR"
 
-			urlTitle = list(urlTitle)
+def fancy_title(urlTitle):
 
-			for i in range(a,b+1):
-				urlTitle.pop(a)
+	if "(" and ")" in urlTitle: #delete whatever is inside of brackets
+		
+		a = urlTitle.find("(")
+		b = urlTitle.find(")")
 
-			urlTitle = "".join(urlTitle)
+		urlTitle = list(urlTitle)
 
-		if "HD" in urlTitle: #delete HD
+		for i in range(a,b+1):
+			urlTitle.pop(a)
 
-			a = urlTitle.find("HD")
-			b = a + 2
-			
-			urlTitle = list(urlTitle)
+		urlTitle = "".join(urlTitle)
 
-			for i in range(a, b):
-				urlTitle.pop(a)
+	if "[" and "]" in urlTitle: #delete whatever is inside of square brackets
+		
+		a = urlTitle.find("[")
+		b = urlTitle.find("]")
 
-			urlTitle = "".join(urlTitle)
+		urlTitle = list(urlTitle)
 
-		if "|" in urlTitle: #delete | simbol
+		for i in range(a,b+1):
+			urlTitle.pop(a)
 
-			a = urlTitle.find("|")
+		urlTitle = "".join(urlTitle)
+
+	if "HD" in urlTitle: #delete HD
+
+		a = urlTitle.find("HD")
+		b = a + 2
+		
+		urlTitle = list(urlTitle)
+
+		for i in range(a, b):
+			urlTitle.pop(a)
+
+		urlTitle = "".join(urlTitle)
+
+	if "|" in urlTitle: #delete | simbol
+
+		a = urlTitle.find("|")
+		b = a + 1
+		
+		urlTitle = list(urlTitle)
+
+		for i in range(a, b):
+			urlTitle.pop(a)
+
+		urlTitle = "".join(urlTitle)
+
+	if "/" in urlTitle: #delete slash
+
+		a = urlTitle.find("/")
+		b = a + 1
+		
+		urlTitle = list(urlTitle)
+
+		for i in range(a, b):
+			urlTitle.pop(a)
+
+		urlTitle = "".join(urlTitle)
+
+	for i in range(len(urlTitle)): #delete double blank spaces
+
+		if "  " in urlTitle:
+
+			a = urlTitle.find("  ")
 			b = a + 1
 			
 			urlTitle = list(urlTitle)
@@ -99,25 +147,9 @@ def getSearch(search):
 
 			urlTitle = "".join(urlTitle)
 
-		for i in range(len(urlTitle)): #delete double blank spaces
-
-			if "  " in urlTitle:
-
-				a = urlTitle.find("  ")
-				b = a + 2
-				
-				urlTitle = list(urlTitle)
-
-				for i in range(a, b):
-					urlTitle.pop(a)
-
-				urlTitle = "".join(urlTitle)
-
-		return url, urlTitle
-
-	else:
-		return "ERROR", "ERROR"
+	return urlTitle
 
 if __name__ == "__main__":
 
+	print(getSearch("chloe staffler", embed_search=True))
 	print(getSearch("huege laurence unchain my heart")) #error!
