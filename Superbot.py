@@ -628,10 +628,6 @@ async def queue(ctx):
 
 
 
-<<<<<<< HEAD
+
 client.loop.create_task(search_time_out())
 client.run(TOKEN)
-=======
-client.loop.create_task(change_status())
-client.run(TOKEN)
->>>>>>> 00161010fa5dcaec0a7366f877b2fee761796d00
