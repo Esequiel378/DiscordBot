@@ -11,7 +11,7 @@ import time
 
 #-----------------------------------------------------------------------------------------------------------------
 
-TOKEN = "NDYxNjU2Nzk0NTYxNzczNTg4.DhWe_Q.ngqoRy0rniOJr79BNXfdAVdTC5c" # add your bot TOKEN
+TOKEN = "TOKEN" # add your bot TOKEN
 
 client = commands.Bot(command_prefix="$") #choose the prefix you want yo use
 servers_list = {}
@@ -628,5 +628,10 @@ async def queue(ctx):
 
 
 
+<<<<<<< HEAD
 client.loop.create_task(search_time_out())
 client.run(TOKEN)
+=======
+client.loop.create_task(change_status())
+client.run(TOKEN)
+>>>>>>> 00161010fa5dcaec0a7366f877b2fee761796d00

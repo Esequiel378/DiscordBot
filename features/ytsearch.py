@@ -9,15 +9,22 @@ def getSearch(search, embed_search=False):
 	maxResults = 10
 	cout = False
 
+<<<<<<< HEAD
 	search_results = []
 
 	url_check = ["https://","www.",".com"]
 	
 	API_KEY = "AIzaSyAp6LDki7q5NePgwJniTFdxtnKFc1tOazU" #add your API KEY
+=======
+	url_check = ["https://","www.",".com"]
+	#bTitle = ["(", ")", "[", "]"] #Characters to delete
+
+	API_KEY = "APIKEY" #add your API KEY
+>>>>>>> 00161010fa5dcaec0a7366f877b2fee761796d00
 
 	for i in range(len(url_check)):
 
-		'''sistem to detect if its a link or search'''
+		'''system to detect if its a link or search'''
           
 		if url_check[i] in search:
 
@@ -151,5 +158,9 @@ def fancy_title(urlTitle):
 
 if __name__ == "__main__":
 
+<<<<<<< HEAD
 	print(getSearch("chloe staffler", embed_search=True))
 	print(getSearch("huege laurence unchain my heart")) #error!
+=======
+	print(getSearch("huege laurence unchain my heart")) #error!
+>>>>>>> 00161010fa5dcaec0a7366f877b2fee761796d00
